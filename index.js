@@ -3,7 +3,14 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const port = process.env.PORT || 5000;
 
+
+// middlewares
+app.use(cors({
+    origin: ["http://localhost:5173"]
+}));
+app.use(express.json());
 
 
 
@@ -31,14 +38,27 @@ async function run() {
         // await client.connect();
 
 
+        // Database and colletion
+        const userCollection = client.db("glideParcel").collection("users");
 
 
+        // // Post new user to the database
+        app.post("/user", async (req, res) => {
+            const user = req.body;
 
+            // checking if the user already exists
+            const query = { email: user.email };
+            const existingUser = await userCollection.findOne(query);
+            if (existingUser) {
+                return res.send({ message: "User already exists", insertedId: null });
+            }
+            else {
+                const result = await userCollection.insertOne(user);
+                res.send(result);
+            }
+        });
 
-
-
-
-
+        
 
 
 
@@ -52,3 +72,14 @@ async function run() {
     }
 }
 run().catch(console.dir);
+
+
+
+
+app.get("/", (req, res) => {
+    res.send("Glide Parcel is running ok.")
+});
+
+app.listen(port, () => {
+    console.log(`Glide Parcel is running on port: ${port}`)
+});
