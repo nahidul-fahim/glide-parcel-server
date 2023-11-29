@@ -6,6 +6,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 
+
 // middlewares
 app.use(cors({
     origin: ["http://localhost:5173"]
@@ -40,9 +41,10 @@ async function run() {
 
         // Database and colletion
         const userCollection = client.db("glideParcel").collection("users");
+        const bookingCollection = client.db("glideParcel").collection("bookings");
 
 
-        // // Post new user to the database
+        // Post new user to the database
         app.post("/user", async (req, res) => {
             const user = req.body;
 
@@ -58,7 +60,25 @@ async function run() {
             }
         });
 
-        
+
+        // Post new parcel booking data to database
+        app.post("/booking", async (req, res) => {
+            const booking = req.body;
+            const result = await bookingCollection.insertOne(booking);
+            res.send(result);
+        })
+
+
+        // get all the parcel for a user
+        app.get("/booking", async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const result = await bookingCollection.find(query).toArray();
+            console.log(result)
+            res.send(result);
+        })
+
+
 
 
 
