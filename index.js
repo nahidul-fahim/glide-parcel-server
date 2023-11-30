@@ -102,12 +102,28 @@ async function run() {
                     delvDate: updatedBookingInfo.delvDate,
                     latitude: updatedBookingInfo.latitude,
                     longitude: updatedBookingInfo.longitude,
+                    bookingStatus: updatedBookingInfo.bookingStatus
                 }
             };
             const result = await bookingCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
 
+
+        // cancel a booking
+        app.put("/cancelbooking/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upset: true };
+            const cancelBooking = req.body;
+            const updateDoc = {
+                $set: {
+                    bookingStatus: cancelBooking.bookingStatus
+                }
+            };
+            const result = await bookingCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
 
 
 
