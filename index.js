@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 
@@ -74,7 +74,37 @@ async function run() {
             const email = req.query.email;
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray();
-            console.log(result)
+            res.send(result);
+        })
+
+        // get a single parcel for a user
+        app.get("/booking/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await bookingCollection.findOne(query);
+            res.send(result);
+        })
+
+
+        // update a booking
+        app.put("/updatebooking/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upset: true };
+            const updatedBookingInfo = req.body;
+            const updateDoc = {
+                $set: {
+                    phone: updatedBookingInfo.phone,
+                    parcelType: updatedBookingInfo.parcelType,
+                    recvName: updatedBookingInfo.recvName,
+                    recvPhone: updatedBookingInfo.recvPhone,
+                    delvAddress: updatedBookingInfo.delvAddress,
+                    delvDate: updatedBookingInfo.delvDate,
+                    latitude: updatedBookingInfo.latitude,
+                    longitude: updatedBookingInfo.longitude,
+                }
+            };
+            const result = await bookingCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
 
