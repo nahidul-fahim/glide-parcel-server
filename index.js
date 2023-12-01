@@ -69,6 +69,13 @@ async function run() {
         })
 
 
+        // get all the booked parcels
+        app.get("/allbookings", async (req, res) => {
+            const result = await bookingCollection.find().toArray();
+            res.send(result);
+        })
+
+
         // get all the parcel for a user
         app.get("/booking", async (req, res) => {
             const email = req.query.email;
