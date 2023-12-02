@@ -103,7 +103,15 @@ async function run() {
         })
 
 
-        // get all the parcels for a user
+        // get all the users
+        app.get("/allusers", async (req, res) => {
+            const query = { userType: "user" };
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        // get all the parcels booked by a single user
         app.get("/booking", async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
@@ -130,7 +138,7 @@ async function run() {
         });
 
 
-        //get all the delivery men
+        //get all the delivery man
         app.get("/deliveryman", async (req, res) => {
             const query = { userType: "delivery man" }
             const result = await userCollection.find(query).toArray();
@@ -206,6 +214,21 @@ async function run() {
             const updateDoc = {
                 $set: {
                     photo: updatedImg.photo
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
+        // updte total order
+        app.put("/totalorder/:email", async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $inc: {
+                    totalOrder: 1
                 }
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
