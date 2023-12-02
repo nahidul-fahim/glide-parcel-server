@@ -221,14 +221,32 @@ async function run() {
         })
 
 
-        // updte total order
+        // updte total order and total spent by a user
         app.put("/totalorder/:email", async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const options = { upsert: true };
+            const addSpent = req.body;
             const updateDoc = {
                 $inc: {
-                    totalOrder: 1
+                    totalOrder: 1,
+                    totalSpent: addSpent.cost
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
+        // update user role to admin or delivery man
+        app.put("/userrole/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedRole = req.body;
+            const updateDoc = {
+                $set: {
+                    userType: updatedRole.userType
                 }
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
