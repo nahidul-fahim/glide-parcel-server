@@ -132,8 +132,27 @@ async function run() {
 
         //get all the delivery men
         app.get("/deliveryman", async (req, res) => {
-            const query = {userType : "delivery man"}
+            const query = { userType: "delivery man" }
             const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        // update booking details by an admin
+        app.put("/updatebyadmin/:id", async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedInfoByAdmin = req.body;
+            const updateDoc = {
+                $set: {
+                    deliveryManId: updatedInfoByAdmin.deliveryManId,
+                    apprxDelvDate: updatedInfoByAdmin.apprxDelvDate,
+                    bookingStatus: updatedInfoByAdmin.bookingStatus
+                }
+            };
+            const result = await bookingCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
 
@@ -142,7 +161,7 @@ async function run() {
         app.put("/updatebooking/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
-            const options = { upset: true };
+            const options = { upsert: true };
             const updatedBookingInfo = req.body;
             const updateDoc = {
                 $set: {
@@ -166,7 +185,7 @@ async function run() {
         app.put("/bookingstatus/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
-            const options = { upset: true };
+            const options = { upsert: true };
             const updateStatus = req.body;
             const updateDoc = {
                 $set: {
@@ -182,7 +201,7 @@ async function run() {
         app.put("/profilePic/:email", async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
-            const options = { upset: true };
+            const options = { upsert: true };
             const updatedImg = req.body;
             const updateDoc = {
                 $set: {
@@ -192,6 +211,11 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
+
+
+
+
+
 
 
 
