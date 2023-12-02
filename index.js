@@ -69,14 +69,41 @@ async function run() {
         })
 
 
-        // get all the booked parcels
+        // verify if admin
+        app.get("/users/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.userType === "admin";
+            };
+            res.send({ admin });
+        });
+
+
+        // verify if delivery man
+        app.get("/users/deliveryman/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let deliveryMan = false;
+            if (user) {
+                deliveryMan = user?.userType === "delivery man";
+            };
+            res.send({ deliveryMan });
+        });
+
+
+
+        // get all the booked parcels by all users
         app.get("/allbookings", async (req, res) => {
             const result = await bookingCollection.find().toArray();
             res.send(result);
         })
 
 
-        // get all the parcel for a user
+        // get all the parcels for a user
         app.get("/booking", async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
@@ -94,16 +121,24 @@ async function run() {
         });
 
 
-        // get single user
+        // get a single user
         app.get("/user/:email", async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.findOne(query);
             res.send(result);
+        });
+
+
+        //get all the delivery men
+        app.get("/deliveryman", async (req, res) => {
+            const query = {userType : "delivery man"}
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
         })
 
 
-        // update a booking
+        // update a booking by the user
         app.put("/updatebooking/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -127,7 +162,7 @@ async function run() {
         })
 
 
-        // update booking status
+        // update booking status by user
         app.put("/bookingstatus/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
