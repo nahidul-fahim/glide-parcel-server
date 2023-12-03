@@ -164,6 +164,15 @@ async function run() {
         })
 
 
+        // get all the reviews
+        app.get("/reviews/:id", async (req, res) => {
+            const deliveryMan = req.params.id;
+            const query = { deliveryMan: deliveryMan };
+            const result = await reviewsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
         // update booking details by an admin
         app.put("/updatebyadmin/:id", async (req, res) => {
             const id = req.params.id;
