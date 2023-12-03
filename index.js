@@ -157,7 +157,7 @@ async function run() {
 
 
         // get all the users
-        app.get("/allusers", verifyToken, async (req, res) => {
+        app.get("/allusers", verifyToken, verifyAdmin, async (req, res) => {
             const query = { userType: "user" };
             const result = await userCollection.find(query).toArray();
             res.send(result);
