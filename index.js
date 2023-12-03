@@ -45,6 +45,12 @@ async function run() {
         const reviewsCollection = client.db("glideParcel").collection("reviews");
 
 
+        const totalBooking = await bookingCollection.countDocuments();
+        console.log(totalBooking);
+
+
+
+
         // Post new user to the database
         app.post("/user", async (req, res) => {
             const user = req.body;
@@ -102,7 +108,6 @@ async function run() {
             };
             res.send({ deliveryMan });
         });
-
 
 
         // get all the booked parcels by all users
@@ -169,6 +174,14 @@ async function run() {
             const deliveryMan = req.params.id;
             const query = { deliveryMan: deliveryMan };
             const result = await reviewsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        // get all the delivered parcels
+        app.get("/alldelivered", async (req, res) => {
+            const query = "completed";
+            const result = await bookingCollection.find(query).toArray();
             res.send(result);
         })
 
