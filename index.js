@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -45,9 +46,47 @@ async function run() {
         const reviewsCollection = client.db("glideParcel").collection("reviews");
 
 
-        const totalBooking = await bookingCollection.countDocuments();
-        console.log(totalBooking);
+        // const totalBooking = await bookingCollection.countDocuments();
+        // console.log(totalBooking);
 
+
+
+        // JWT related API
+        app.post("/jwt", async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '1h' });
+            res.send({ token });
+        })
+
+
+        // verify token middleware
+        const verifyToken = (req, res, next) => {
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'Unauthorized' });
+            }
+            const token = req.headers.authorization.split(' ')[1]
+            jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'Unauthorized' });
+                }
+                req.decoded = decoded;
+                next();
+            })
+        }
+
+
+
+        // verify admin middleware
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user?.userType === 'admin';
+            if (!isAdmin) {
+                return res.status(403).send({ message: "Forbidden access!" })
+            };
+            next();
+        }
 
 
 
@@ -85,7 +124,7 @@ async function run() {
 
 
         // verify if admin
-        app.get("/users/admin/:email", async (req, res) => {
+        app.get("/users/admin/:email", verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const user = await userCollection.findOne(query);
@@ -98,7 +137,7 @@ async function run() {
 
 
         // verify if delivery man
-        app.get("/users/deliveryman/:email", async (req, res) => {
+        app.get("/users/deliveryman/:email", verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const user = await userCollection.findOne(query);
@@ -111,14 +150,14 @@ async function run() {
 
 
         // get all the booked parcels by all users
-        app.get("/allbookings", async (req, res) => {
+        app.get("/allbookings", verifyToken, async (req, res) => {
             const result = await bookingCollection.find().toArray();
             res.send(result);
         })
 
 
         // get all the users
-        app.get("/allusers", async (req, res) => {
+        app.get("/allusers", verifyToken, async (req, res) => {
             const query = { userType: "user" };
             const result = await userCollection.find(query).toArray();
             res.send(result);
@@ -126,7 +165,7 @@ async function run() {
 
 
         // get all the parcels booked by a single user
-        app.get("/booking", async (req, res) => {
+        app.get("/booking", verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray();
@@ -135,7 +174,7 @@ async function run() {
 
 
         // get a single parcel for a user
-        app.get("/booking/:id", async (req, res) => {
+        app.get("/booking/:id", verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await bookingCollection.findOne(query);
@@ -144,7 +183,7 @@ async function run() {
 
 
         // get a single user
-        app.get("/user/:email", async (req, res) => {
+        app.get("/user/:email", verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.findOne(query);
@@ -153,7 +192,7 @@ async function run() {
 
 
         //get all the delivery man
-        app.get("/deliveryman", async (req, res) => {
+        app.get("/deliveryman", verifyToken, async (req, res) => {
             const query = { userType: "delivery man" }
             const result = await userCollection.find(query).toArray();
             res.send(result);
@@ -161,7 +200,7 @@ async function run() {
 
 
         // get all the dlivery list assigned to a deliery man
-        app.get("/deliveries/:id", async (req, res) => {
+        app.get("/deliveries/:id", verifyToken, async (req, res) => {
             const deliveryManId = req.params.id;
             const query = { deliveryManId: deliveryManId }
             const result = await bookingCollection.find(query).toArray();
@@ -170,7 +209,7 @@ async function run() {
 
 
         // get all the reviews
-        app.get("/reviews/:id", async (req, res) => {
+        app.get("/reviews/:id", verifyToken, async (req, res) => {
             const deliveryMan = req.params.id;
             const query = { deliveryMan: deliveryMan };
             const result = await reviewsCollection.find(query).toArray();
@@ -179,7 +218,7 @@ async function run() {
 
 
         // get all the delivered parcels
-        app.get("/alldelivered", async (req, res) => {
+        app.get("/alldelivered", verifyToken, async (req, res) => {
             const query = "completed";
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
@@ -187,7 +226,7 @@ async function run() {
 
 
         // update booking details by an admin
-        app.put("/updatebyadmin/:id", async (req, res) => {
+        app.put("/updatebyadmin/:id", verifyToken, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
@@ -277,8 +316,8 @@ async function run() {
         })
 
 
-        // update user role to admin or delivery man
-        app.put("/userrole/:id", async (req, res) => {
+        // update user type
+        app.put("/userrole/:id", verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
