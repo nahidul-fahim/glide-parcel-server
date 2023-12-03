@@ -42,6 +42,7 @@ async function run() {
         // Database and colletion
         const userCollection = client.db("glideParcel").collection("users");
         const bookingCollection = client.db("glideParcel").collection("bookings");
+        const reviewsCollection = client.db("glideParcel").collection("reviews");
 
 
         // Post new user to the database
@@ -59,6 +60,14 @@ async function run() {
                 res.send(result);
             }
         });
+
+
+        // post new review data to database
+        app.post("/review", async (req, res) => {
+            const newReview = req.body;
+            const result = await reviewsCollection.insertOne(newReview);
+            res.send(result);
+        })
 
 
         // Post new parcel booking data to database
@@ -132,10 +141,8 @@ async function run() {
         // get a single user
         app.get("/user/:email", async (req, res) => {
             const email = req.params.email;
-            console.log(email);
             const query = { email: email };
             const result = await userCollection.findOne(query);
-            console.log(result);
             res.send(result);
         });
 
@@ -160,7 +167,6 @@ async function run() {
         // update booking details by an admin
         app.put("/updatebyadmin/:id", async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
             const updatedInfoByAdmin = req.body;
