@@ -132,8 +132,10 @@ async function run() {
         // get a single user
         app.get("/user/:email", async (req, res) => {
             const email = req.params.email;
+            console.log(email);
             const query = { email: email };
             const result = await userCollection.findOne(query);
+            console.log(result);
             res.send(result);
         });
 
@@ -142,6 +144,15 @@ async function run() {
         app.get("/deliveryman", async (req, res) => {
             const query = { userType: "delivery man" }
             const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        // get all the dlivery list assigned to a deliery man
+        app.get("/deliveries/:id", async (req, res) => {
+            const deliveryManId = req.params.id;
+            const query = { deliveryManId: deliveryManId }
+            const result = await bookingCollection.find(query).toArray();
             res.send(result);
         })
 
@@ -189,7 +200,7 @@ async function run() {
         })
 
 
-        // update booking status by user
+        // update booking status by a user or delivery man
         app.put("/bookingstatus/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -247,6 +258,21 @@ async function run() {
             const updateDoc = {
                 $set: {
                     userType: updatedRole.userType
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
+        // update total deliveries for a delivery man
+        app.put("/totaldelivery/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $inc: {
+                    totalDelivery: 1
                 }
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
