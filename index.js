@@ -168,10 +168,23 @@ async function run() {
         // get all the parcels booked by a single user
         app.get("/booking", async (req, res) => {
             const email = req.query.email;
-            const query = { email: email }
+            const bookingStatus = req.query.bookingStatus;
+
+            // Build the query object with email
+            const query = { email: email };
+
+            // Conditionally add the bookingStatus field to the query
+            if (bookingStatus && bookingStatus.toLowerCase() !== 'all') {
+                query.bookingStatus = { $regex: bookingStatus, $options: 'i' };
+            }
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
         });
+
+
+
+
+
 
 
         // get a single parcel for a user
@@ -434,8 +447,8 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
