@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 // middlewares
 app.use(cors({
-    origin: ["http://localhost:5173"]
+    origin: ["http://localhost:5173", "https://glide-parcel.web.app"]
 }));
 app.use(express.json());
 
@@ -276,7 +276,6 @@ async function run() {
                 }
             ]).toArray();
             const totalDeliveries = result.length > 0 ? result[0].totalDelivery : 0;
-
 
             // get total registered users
             const totalUsers = await userCollection.estimatedDocumentCount();
