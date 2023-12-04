@@ -46,10 +46,6 @@ async function run() {
         const reviewsCollection = client.db("glideParcel").collection("reviews");
 
 
-        // const totalBooking = await bookingCollection.countDocuments();
-        // console.log(totalBooking);
-
-
 
         // JWT related API
         app.post("/jwt", async (req, res) => {
@@ -61,13 +57,14 @@ async function run() {
 
         // verify token middleware
         const verifyToken = (req, res, next) => {
+            // console.log(req.headers.authorization);
             if (!req.headers.authorization) {
-                return res.status(401).send({ message: 'Unauthorized' });
+                return res.status(401).send({ message: 'Unauthorized 01' });
             }
             const token = req.headers.authorization.split(' ')[1]
             jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
                 if (err) {
-                    return res.status(401).send({ message: 'Unauthorized' });
+                    return res.status(401).send({ message: 'Unauthorized 02' });
                 }
                 req.decoded = decoded;
                 next();
@@ -87,6 +84,35 @@ async function run() {
             };
             next();
         }
+
+
+        // verify if admin
+        app.get("/users/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let admin = false;
+            if (user) {
+                admin = user?.userType === "admin";
+            };
+            res.send({ admin });
+        });
+
+
+        // verify if delivery man
+        app.get("/users/deliveryman/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+            let deliveryMan = false;
+            if (user) {
+                deliveryMan = user?.userType === "delivery man";
+            };
+            res.send({ deliveryMan });
+        });
+
+
+
 
 
 
@@ -123,41 +149,16 @@ async function run() {
         })
 
 
-        // verify if admin
-        app.get("/users/admin/:email", verifyToken, async (req, res) => {
-            const email = req.params.email;
-            const query = { email: email };
-            const user = await userCollection.findOne(query);
-            let admin = false;
-            if (user) {
-                admin = user?.userType === "admin";
-            };
-            res.send({ admin });
-        });
-
-
-        // verify if delivery man
-        app.get("/users/deliveryman/:email", verifyToken, async (req, res) => {
-            const email = req.params.email;
-            const query = { email: email };
-            const user = await userCollection.findOne(query);
-            let deliveryMan = false;
-            if (user) {
-                deliveryMan = user?.userType === "delivery man";
-            };
-            res.send({ deliveryMan });
-        });
-
 
         // get all the booked parcels by all users
-        app.get("/allbookings", verifyToken, async (req, res) => {
+        app.get("/allbookings", async (req, res) => {
             const result = await bookingCollection.find().toArray();
             res.send(result);
         })
 
 
         // get all the users
-        app.get("/allusers", verifyToken, verifyAdmin, async (req, res) => {
+        app.get("/allusers", async (req, res) => {
             const query = { userType: "user" };
             const result = await userCollection.find(query).toArray();
             res.send(result);
@@ -165,7 +166,7 @@ async function run() {
 
 
         // get all the parcels booked by a single user
-        app.get("/booking", verifyToken, async (req, res) => {
+        app.get("/booking", async (req, res) => {
             const email = req.query.email;
             const query = { email: email }
             const result = await bookingCollection.find(query).toArray();
@@ -174,7 +175,7 @@ async function run() {
 
 
         // get a single parcel for a user
-        app.get("/booking/:id", verifyToken, async (req, res) => {
+        app.get("/booking/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await bookingCollection.findOne(query);
@@ -183,7 +184,7 @@ async function run() {
 
 
         // get a single user
-        app.get("/user/:email", verifyToken, async (req, res) => {
+        app.get("/user/:email", async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.findOne(query);
@@ -192,15 +193,15 @@ async function run() {
 
 
         //get all the delivery man
-        app.get("/deliveryman", verifyToken, async (req, res) => {
+        app.get("/deliveryman", async (req, res) => {
             const query = { userType: "delivery man" }
             const result = await userCollection.find(query).toArray();
             res.send(result);
         })
 
 
-        // get all the dlivery list assigned to a deliery man
-        app.get("/deliveries/:id", verifyToken, async (req, res) => {
+        // get all the dliveries for a single delivery man
+        app.get("/deliveries/:id", async (req, res) => {
             const deliveryManId = req.params.id;
             const query = { deliveryManId: deliveryManId }
             const result = await bookingCollection.find(query).toArray();
@@ -208,8 +209,17 @@ async function run() {
         })
 
 
+        // get all the ratings for a single delivery man
+        app.get("/allrating/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { deliveryMan: id };
+            const result = await reviewsCollection.find(query).toArray();
+            res.send(result)
+        })
+
+
         // get all the reviews
-        app.get("/reviews/:id", verifyToken, async (req, res) => {
+        app.get("/reviews/:id", async (req, res) => {
             const deliveryMan = req.params.id;
             const query = { deliveryMan: deliveryMan };
             const result = await reviewsCollection.find(query).toArray();
@@ -218,15 +228,55 @@ async function run() {
 
 
         // get all the delivered parcels
-        app.get("/alldelivered", verifyToken, async (req, res) => {
+        app.get("/alldelivered", async (req, res) => {
             const query = "completed";
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
         })
 
 
+
+        // get a single delivery man
+        app.get("/singledeliveryman/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
+
+
+
+        // get stats for homepage
+        app.get("/homestats", async (req, res) => {
+            // get total bookings
+            const totalBookings = await bookingCollection.estimatedDocumentCount();
+
+            // get total deliveries
+            const result = await userCollection.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalDelivery: {
+                            $sum: '$totalDelivery'
+                        }
+                    }
+                }
+            ]).toArray();
+            const totalDeliveries = result.length > 0 ? result[0].totalDelivery : 0;
+
+
+            // get total registered users
+            const totalUsers = await userCollection.estimatedDocumentCount();
+            res.send({
+                totalBookings,
+                totalDeliveries,
+                totalUsers
+            })
+        })
+
+
         // update booking details by an admin
-        app.put("/updatebyadmin/:id", verifyToken, async (req, res) => {
+        app.put("/updatebyadmin/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
@@ -316,15 +366,48 @@ async function run() {
         })
 
 
+
+        // increase totalReview
+        app.put("/reviewcount/:id", async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+
+            const newReview = req.body.rating;
+            console.log(newReview);
+            const deliveryMan = await userCollection.findOne(filter);
+            const oldTotalReview = deliveryMan.totalReview;
+            const newTotalReview = deliveryMan.totalReview + 1;
+            const oldAvgReview = deliveryMan.avgReview;
+            console.log(oldAvgReview, typeof oldAvgReview);
+            const multification = oldTotalReview * oldAvgReview;
+            const reviewSum = multification + newReview;
+            const newAvgReview = reviewSum / newTotalReview;
+            const updateDoc = {
+                $inc: {
+                    totalReview: 1
+                },
+                $set: {
+                    avgReview: parseFloat(newAvgReview.toFixed(1))
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
+
+
         // update user type
-        app.put("/userrole/:id", verifyToken, verifyAdmin, async (req, res) => {
+        app.put("/userrole/:id", async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const options = { upsert: true };
             const updatedRole = req.body;
             const updateDoc = {
                 $set: {
-                    userType: updatedRole.userType
+                    userType: updatedRole.userType,
+                    avgReview: 0
                 }
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
@@ -345,11 +428,6 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
-
-
-
-
-
 
 
 
