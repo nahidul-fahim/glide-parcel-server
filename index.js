@@ -157,12 +157,15 @@ async function run() {
         })
 
 
+
         // get all the users
         app.get("/allusers", async (req, res) => {
             const query = { userType: "user" };
             const result = await userCollection.find(query).toArray();
             res.send(result);
         })
+
+
 
 
         // get all the parcels booked by a single user
@@ -180,9 +183,6 @@ async function run() {
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
         });
-
-
-
 
 
 
@@ -258,7 +258,6 @@ async function run() {
         })
 
 
-
         // get stats for homepage
         app.get("/homestats", async (req, res) => {
             // get total bookings
@@ -285,6 +284,31 @@ async function run() {
                 totalUsers
             })
         })
+
+
+
+
+        // get deliveryman for homepage
+        app.get("/homepagedeliveryman", async (req, res) => {
+            const userType = "delivery man";
+            const query = { userType: userType };
+            const options = {
+                sort: {
+                    totalDelivery: -1
+                },
+                limit: 5,
+                projection: {
+                    _id: 0,
+                    name: 1,
+                    photo: 1,
+                    totalDelivery: 1,
+                    avgReview: 1
+                },
+            }
+            const result = await userCollection.find(query, options).toArray()
+            res.send(result);
+        })
+
 
 
         // update booking details by an admin
