@@ -8,6 +8,7 @@ const port = process.env.PORT || 5000;
 
 
 
+
 // middlewares
 app.use(cors({
     origin: ["http://localhost:5173", "https://glide-parcel.web.app"]
