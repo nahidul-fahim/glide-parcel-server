@@ -115,8 +115,6 @@ async function run() {
 
 
 
-
-
         // Post new user to the database
         app.post("/user", async (req, res) => {
             const user = req.body;
@@ -259,8 +257,31 @@ async function run() {
         })
 
 
+
+        // get parcel tracking result for homepage
+        app.get("/homeparceltracking", async (req, res) => {
+
+            // get parcel tracking id
+            const parcelTrackerId = req?.query?.id;
+
+            const trackingQuery = {_id: new ObjectId(parcelTrackerId)}
+
+            const options = {
+                projection: {
+                    _id: 0,
+                    bookingStatus: 1
+                },
+            }
+            const trackingResult = await bookingCollection.findOne(trackingQuery, options);
+            res.send({trackingResult});
+        })
+
+
+
+
         // get stats for homepage
         app.get("/homestats", async (req, res) => {
+
             // get total bookings
             const totalBookings = await bookingCollection.estimatedDocumentCount();
 
