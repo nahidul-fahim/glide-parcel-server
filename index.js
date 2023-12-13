@@ -148,6 +148,13 @@ async function run() {
         })
 
 
+        // post in the delivery man community
+        app.post("/newcommunitypost", async (req, res) => {
+            const newPost = req.body;
+            // const result = await 
+        })
+
+
 
         // get all the booked parcels by all users
         app.get("/allbookings", async (req, res) => {
@@ -230,7 +237,15 @@ async function run() {
         })
 
 
-        // get all the reviews
+        //get all the review of all delivery man
+        app.get("/allreviews", async (req, res) => {
+            const result = await reviewsCollection.find().toArray();
+            res.send(result);
+        })
+
+
+
+        // get all the reviews for a particular delivery man
         app.get("/reviews/:id", async (req, res) => {
             const deliveryMan = req.params.id;
             const query = { deliveryMan: deliveryMan };
@@ -264,7 +279,7 @@ async function run() {
             // get parcel tracking id
             const parcelTrackerId = req?.query?.id;
 
-            const trackingQuery = {_id: new ObjectId(parcelTrackerId)}
+            const trackingQuery = { _id: new ObjectId(parcelTrackerId) }
 
             const options = {
                 projection: {
@@ -273,7 +288,7 @@ async function run() {
                 },
             }
             const trackingResult = await bookingCollection.findOne(trackingQuery, options);
-            res.send({trackingResult});
+            res.send({ trackingResult });
         })
 
 
